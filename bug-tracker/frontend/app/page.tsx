@@ -1,54 +1,103 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 
-const stats = [
-  {
-    title: "TOTAL BUGS",
-    value: "24",
-    info: "+5 THIS WEEK",
-    color: "green",
-  },
-  {
-    title: "OPEN BUGS",
-    value: "12",
-    info: "4 NEED ATTENTION",
-    color: "green",
-  },
-  {
-    title: "CRITICAL",
-    value: "3",
-    info: "IMMEDIATE ACTION",
-    color: "red",
-  },
-  {
-    title: "RESOLVED",
-    value: "9",
-    info: "72% RESOLUTION RATE",
-    color: "green",
-  },
-];
-
-const bugs = [
-  {
-    id: "BUG-024",
-    title: "Checkout crashes when address is empty",
-    severity: "CRITICAL",
-    status: "OPEN",
-  },
-  {
-    id: "BUG-023",
-    title: "Cart displays incorrect total",
-    severity: "HIGH",
-    status: "IN PROGRESS",
-  },
-  {
-    id: "BUG-022",
-    title: "Product image fails to load",
-    severity: "MEDIUM",
-    status: "RESOLVED",
-  },
-];
+type Bug = {
+  id: number;
+  title: string;
+  description: string;
+  severity: string;
+  priority: string;
+  category: string;
+  status: string;
+  created_at: string;
+};
 
 export default function Home() {
+  const [bugs, setBugs] = useState<Bug[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadBugs() {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/bugs");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch bugs");
+        }
+
+        const data = await response.json();
+        setBugs(data);
+      } catch (err) {
+        console.error(err);
+        setError("Could not load bugs from BugMind backend.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadBugs();
+  }, []);
+
+  const totalBugs = bugs.length;
+
+  const openBugs = useMemo(
+    () =>
+      bugs.filter(
+        (bug) =>
+          bug.status.toLowerCase() !== "resolved" &&
+          bug.status.toLowerCase() !== "closed"
+      ).length,
+    [bugs]
+  );
+
+  const criticalBugs = useMemo(
+    () =>
+      bugs.filter(
+        (bug) => bug.severity.toLowerCase() === "critical"
+      ).length,
+    [bugs]
+  );
+
+  const resolvedBugs = useMemo(
+    () =>
+      bugs.filter(
+        (bug) =>
+          bug.status.toLowerCase() === "resolved" ||
+          bug.status.toLowerCase() === "closed"
+      ).length,
+    [bugs]
+  );
+
+  const stats = [
+    {
+      title: "TOTAL BUGS",
+      value: totalBugs,
+      info: "FROM DATABASE",
+      color: "green",
+    },
+    {
+      title: "OPEN BUGS",
+      value: openBugs,
+      info: "NEEDS ATTENTION",
+      color: "green",
+    },
+    {
+      title: "CRITICAL",
+      value: criticalBugs,
+      info: "IMMEDIATE ACTION",
+      color: "red",
+    },
+    {
+      title: "RESOLVED",
+      value: resolvedBugs,
+      info: "COMPLETED ISSUES",
+      color: "green",
+    },
+  ];
+
   return (
     <main className="min-h-screen bg-black text-[#f5f5e8] flex font-mono">
 
@@ -101,7 +150,6 @@ export default function Home() {
 
       </aside>
 
-
       {/* MAIN */}
       <section className="flex-1 p-10">
 
@@ -136,7 +184,6 @@ export default function Home() {
           </Link>
 
         </div>
-
 
         {/* STATS */}
         <div className="grid grid-cols-4 gap-5">
@@ -184,7 +231,6 @@ export default function Home() {
 
         </div>
 
-
         {/* LOWER SECTION */}
         <div className="grid grid-cols-3 gap-6 mt-8">
 
@@ -203,70 +249,84 @@ export default function Home() {
                 </p>
               </div>
 
-              <button className="text-xs text-[#39ff14] font-bold">
+              <Link
+                href="/bugs"
+                className="text-xs text-[#39ff14] font-bold"
+              >
                 VIEW ALL →
-              </button>
+              </Link>
 
             </div>
 
+            {loading ? (
+              <div className="py-12 text-center text-zinc-600 text-sm">
+                LOADING BUGS...
+              </div>
+            ) : error ? (
+              <div className="py-12 text-center text-[#ff2929] text-sm">
+                {error}
+              </div>
+            ) : bugs.length === 0 ? (
+              <div className="py-12 text-center text-zinc-600 text-sm">
+                NO BUGS REPORTED YET.
+              </div>
+            ) : (
+              <div className="space-y-2">
 
-            <div className="space-y-2">
+                {bugs.slice(0, 5).map((bug) => (
+                  <div
+                    key={bug.id}
+                    className="
+                      flex
+                      items-center
+                      justify-between
+                      p-4
+                      rounded-lg
+                      hover:bg-white/[0.03]
+                      border
+                      border-transparent
+                      hover:border-white/5
+                      transition
+                    "
+                  >
 
-              {bugs.map((bug) => (
-                <div
-                  key={bug.id}
-                  className="
-                    flex
-                    items-center
-                    justify-between
-                    p-4
-                    rounded-lg
-                    hover:bg-white/[0.03]
-                    border
-                    border-transparent
-                    hover:border-white/5
-                    transition
-                  "
-                >
+                    <div>
+                      <p className="text-[10px] text-zinc-600 tracking-widest">
+                        BUG-{String(bug.id).padStart(3, "0")}
+                      </p>
 
-                  <div>
-                    <p className="text-[10px] text-zinc-600 tracking-widest">
-                      {bug.id}
-                    </p>
+                      <p className="text-sm mt-1 font-semibold">
+                        {bug.title}
+                      </p>
+                    </div>
 
-                    <p className="text-sm mt-1 font-semibold">
-                      {bug.title}
-                    </p>
+                    <div className="flex gap-4 items-center">
+
+                      <span
+                        className={`text-[10px] font-black tracking-wider ${
+                          bug.severity.toLowerCase() === "critical"
+                            ? "text-[#ff2929]"
+                            : bug.severity.toLowerCase() === "high"
+                            ? "text-orange-400"
+                            : "text-yellow-300"
+                        }`}
+                      >
+                        {bug.severity.toUpperCase()}
+                      </span>
+
+                      <span className="text-[10px] px-3 py-1 rounded-full border border-white/10 text-zinc-300 bg-white/5">
+                        {bug.status.toUpperCase()}
+                      </span>
+
+                    </div>
+
                   </div>
+                ))}
 
-
-                  <div className="flex gap-4 items-center">
-
-                    <span
-                      className={`text-[10px] font-black tracking-wider ${
-                        bug.severity === "CRITICAL"
-                          ? "text-[#ff2929]"
-                          : bug.severity === "HIGH"
-                          ? "text-orange-400"
-                          : "text-yellow-300"
-                      }`}
-                    >
-                      {bug.severity}
-                    </span>
-
-                    <span className="text-[10px] px-3 py-1 rounded-full border border-white/10 text-zinc-300 bg-white/5">
-                      {bug.status}
-                    </span>
-
-                  </div>
-
-                </div>
-              ))}
-
-            </div>
+              </div>
+            )}
 
           </div>
-
 
           {/* AI INSIGHTS */}
           <div className="
@@ -293,24 +353,23 @@ export default function Home() {
               BUGMIND ANALYZED CURRENT ISSUES
             </p>
 
-
             <div className="mt-7 space-y-5">
 
               <Insight
-                title="3 SIMILAR BUGS DETECTED"
-                text="Possible duplicate reports found."
-                color="green"
-              />
-
-              <Insight
-                title="CHECKOUT NEEDS ATTENTION"
-                text="Highest concentration of critical bugs."
+                title={`${criticalBugs} CRITICAL BUGS`}
+                text="Issues requiring immediate attention."
                 color="red"
               />
 
               <Insight
-                title="2 RECURRING ROOT CAUSES"
-                text="Validation errors appear frequently."
+                title={`${openBugs} OPEN BUGS`}
+                text="Active issues still awaiting resolution."
+                color="green"
+              />
+
+              <Insight
+                title={`${resolvedBugs} RESOLVED BUGS`}
+                text="Issues that have been successfully completed."
                 color="green"
               />
 
@@ -325,7 +384,6 @@ export default function Home() {
     </main>
   );
 }
-
 
 function Insight({
   title,
