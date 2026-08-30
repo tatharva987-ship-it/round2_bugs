@@ -1,7 +1,12 @@
+import os
+
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+
+load_dotenv()
 
 from app.ai.analyzer import analyze_bug as run_ai_analysis
 from app.database.database import Base, engine, get_db
@@ -37,11 +42,16 @@ app = FastAPI(
 # CORS
 # ============================================================
 
+# Comma-separated list of allowed frontend origins.
+# Set FRONTEND_URL in your deployment environment to your
+# deployed Next.js URL, e.g. https://your-app.vercel.app
+# Multiple origins can be comma-separated.
+_default_origins = "http://localhost:3000"
+allowed_origins = os.getenv("FRONTEND_URL", _default_origins).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

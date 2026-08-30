@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { API_BASE_URL } from "../../lib/api";
 
 type DuplicateBug = {
   id: number;
@@ -54,7 +55,7 @@ export default function ReportBug() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/analyze",
+        `${API_BASE_URL}/analyze`,
         {
           method: "POST",
           headers: {

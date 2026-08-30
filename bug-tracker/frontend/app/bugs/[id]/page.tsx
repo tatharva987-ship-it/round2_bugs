@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../../../lib/api";
 
 type Bug = {
   id: number;
@@ -61,7 +62,7 @@ export default function BugDetails() {
       setError("");
 
       const response = await fetch(
-        `http://127.0.0.1:8000/bugs/${id}`
+        `${API_BASE_URL}/bugs/${id}`
       );
 
       if (!response.ok) {
@@ -84,7 +85,7 @@ export default function BugDetails() {
   async function loadHistory() {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/bugs/${id}/history`
+        `${API_BASE_URL}/bugs/${id}/history`
       );
 
       if (!response.ok) {
@@ -112,7 +113,7 @@ export default function BugDetails() {
       setSuccess("");
 
       const response = await fetch(
-        `http://127.0.0.1:8000/bugs/${id}`,
+        `${API_BASE_URL}/bugs/${id}`,
         {
           method: "PATCH",
           headers: {

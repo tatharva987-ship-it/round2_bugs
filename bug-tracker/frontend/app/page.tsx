@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { API_BASE_URL } from "../lib/api";
 
 type Bug = {
   id: number;
@@ -22,7 +23,7 @@ export default function Home() {
   useEffect(() => {
     async function loadBugs() {
       try {
-        const response = await fetch("http://127.0.0.1:8000/bugs");
+        const response = await fetch(`${API_BASE_URL}/bugs`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch bugs");
